@@ -1,0 +1,83 @@
+/* public/css/rtl.css
+ * Arabic RTL for the whole website
+ * - All UI text is right-aligned
+ * - ALL form controls (inputs, password, email, number, textarea, select) are RTL + right-aligned
+ * - Utilities .ltr / .en keep non-form text LTR if you ever need it
+ */
+
+/* Enable RTL when the page declares Arabic */
+html[lang="ar"] { direction: rtl; }
+
+/* Arabic-friendly system fonts (Windows + Chrome) */
+body {
+  font-family:
+    "Segoe UI",
+    Tahoma,
+    Arial,
+    "Noto Sans Arabic",
+    "Noto Kufi Arabic",
+    "Tajawal",
+    "Cairo",
+    "Dubai",
+    "IBM Plex Sans Arabic",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global right alignment for Arabic UI text */
+body,
+h1, h2, h3, h4, h5, h6,
+p, label, small, strong, em,
+th, td, caption,
+.legend, .lead, .muted,
+.alert, .err, .hint {
+  text-align: right;
+}
+
+/* Lists: move bullets padding to the right in RTL */
+ul, ol {
+  padding-right: 1.25rem;
+  padding-left: 0;
+  margin-right: 0;
+}
+
+/* Form layout: labels above fields */
+label {
+  display: block;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.field { margin: 16px 0; }
+
+/* === ALL form controls are RTL + right-aligned (password, email, etc.) === */
+input, textarea, select {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* Placeholders aligned right too */
+input::placeholder,
+textarea::placeholder {
+  text-align: right;
+}
+
+/* Keep numeric spinners usable; alignment stays right */
+input[type="number"] {
+  text-align: right !important;
+}
+
+/* Error & hint blocks */
+.err  { text-align: right; }
+.hint { text-align: right; }
+
+/* Utilities for non-form content (emails/URLs in text, not inputs) */
+.ltr, .en {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Optional helpers */
+.text-right { text-align: right !important; }
+.text-left  { text-align: left  !important; }
+.rtl        { direction: rtl !important; }
