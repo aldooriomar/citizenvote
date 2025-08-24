@@ -1,176 +1,218 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="ar">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CitizenVote — Admin</title>
+  <title>CitizenVote — إدارة</title>
+
+  <!-- RTL / Arabic helpers -->
+  <link rel="stylesheet" href="css/rtl.css"/>
+
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
   <style>
     :root{
       --bg:#0f1720;--panel:#121b26;--muted:#9fb2c7;--text:#e8f1fb;--accent:#4aa3ff;--border:#1b2a3a;
       --danger:#ff5d6c;--ok:#28c281
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .nav{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:10px 16px;border-bottom:1px solid var(--border);background:#0c131b;position:sticky;top:0;z-index:5}
-    .brand{margin-right:auto;font-weight:700}
-    .btn{background:#152233;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:10px;text-decoration:none;display:inline-flex;gap:8px;align-items:center}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif
+    }
+
+    /* نخفي الصفحة حتى يمر فحص الجلسة */
+    #app{display:none}
+
+    /* شريط علوي (بنفس منطق index/candidate) */
+    .nav{
+      display:flex;gap:10px;align-items:center;justify-content:flex-start;
+      padding:10px 16px;border-bottom:1px solid var(--border);background:#0c131b;position:sticky;top:0;z-index:5
+    }
+    .brand{margin-left:auto;font-weight:700}
+    .btn{
+      background:#152233;border:1px solid var(--border);color:var(--text);
+      padding:8px 14px;border-radius:10px;text-decoration:none;display:inline-flex;gap:8px;align-items:center
+    }
     .btn:hover{background:#18283a}
     .danger{background:#2a1c1e;border-color:#3b2a2d}.danger:hover{background:#351f23}
     .ok{background:#153226;border-color:#1f4932}.ok:hover{background:#184030}
+
     .shell{max-width:1200px;margin:0 auto;padding:24px}
-    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .panel{
+      background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25)
+    }
     h1{font-size:22px;margin:0 0 12px}
     h2{font-size:18px;margin:0 0 10px;color:var(--muted)}
     label{color:var(--muted);font-size:14px}
+
     input,select{
-      background:#0e1824;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px;outline:none
+      background:#0e1824;border:1px solid var(--border);color:var(--text);
+      padding:10px;border-radius:10px;outline:none
     }
     input:focus,select:focus{border-color:#315b85}
+
     .row{display:flex;gap:12px;align-items:center;margin:10px 0;flex-wrap:wrap}
     .row > *{flex:1 1 220px}
-    .row .thin{flex:0 0 140px}
+    .row .thin{flex:0 0 160px}
+
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:940px){.grid{grid-template-columns:1fr}}
+
     table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-top:1px solid var(--border);text-align:left}
+    th,td{padding:10px;border-top:1px solid var(--border);text-align:right}
     th{color:var(--muted);font-weight:600}
+
     .tools{display:flex;gap:8px}
     .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;background:#152233;border:1px solid var(--border);color:var(--muted)}
     .muted{color:var(--muted)}
     .paging{display:flex;gap:8px;align-items:center;margin-top:10px}
+
     .toast{
-      position:fixed;right:18px;bottom:18px;background:#0e1824;color:var(--text);border:1px solid var(--border);
+      position:fixed;left:18px;bottom:18px;background:#0e1824;color:var(--text);border:1px solid var(--border);
       padding:10px 14px;border-radius:10px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none
     }
     .toast.show{opacity:1;transform:translateY(0)}
-    @media (max-width:940px){.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="brand">CitizenVote</div>
-    <a class="btn" href="/index.html">Dashboard</a>
-    <a class="btn" href="/admin.html">Admin</a>
-    <a class="btn" href="/candidate.html">Candidates</a>
-    <button id="logoutBtn" class="btn danger">Logout</button>
-  </nav>
 
-  <div class="shell">
+  <div id="app">
+    <!-- NAV -->
+    <nav class="nav">
+      <a class="btn" href="/index.html">Dashboard</a>
+      <a class="btn" href="/admin.html">Admin</a>
+      <a class="btn" href="/candidate.html">المرشحون</a>
+      <button id="logoutBtn" class="btn danger">Logout</button>
+      <div class="brand">CitizenVote</div>
+    </nav>
 
-    <!-- Party configuration -->
-    <section class="panel">
-      <h1>Party configuration</h1>
-      <div class="row">
-        <label class="thin" for="th">Threshold:</label>
-        <input id="th" type="number" min="0" step="100" style="max-width:220px"/>
-        <button id="saveTh" class="btn">Save</button>
-        <span class="pill">Current supporters: <b id="supNow">0</b></span>
-        <span class="pill">Progress: <b id="pctNow">0%</b></span>
-      </div>
-    </section>
+    <div class="shell">
 
-    <!-- Candidates (unchanged list shortcut) -->
-    <section class="panel">
-      <h1>Candidates</h1>
-      <div style="overflow:auto">
-        <table id="candTbl">
-          <thead>
-          <tr><th>ID</th><th>Name</th><th>District</th><th>Supporters</th><th>Target</th><th>%</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- NEW: Voters (CRUD) -->
-    <section class="panel">
-      <h1>Voters (CRUD)</h1>
-
-      <div class="grid">
-        <!-- Left: Form (Create/Update) -->
-        <div>
-          <h2>Create / Update voter</h2>
-          <form id="vForm" onsubmit="return false;">
-            <input type="hidden" id="v_id"/>
-            <div class="row">
-              <label class="thin" for="v_full_name">Full name</label>
-              <input id="v_full_name" placeholder="e.g., علي أحمد"/>
-              <label class="thin" for="v_dob">DOB</label>
-              <input id="v_dob" type="date"/>
-            </div>
-            <div class="row">
-              <label class="thin" for="v_candidate_id">Candidate ID</label>
-              <input id="v_candidate_id" type="number" min="1" placeholder="1"/>
-              <label class="thin" for="v_assistant_id">Assistant ID</label>
-              <input id="v_assistant_id" type="number" min="1" placeholder="optional"/>
-            </div>
-            <div class="row">
-              <label class="thin" for="v_district_id">District ID</label>
-              <input id="v_district_id" type="number" min="1" placeholder="e.g., 1"/>
-              <label class="thin" for="v_polling_center">Polling center</label>
-              <input id="v_polling_center" placeholder="optional"/>
-            </div>
-            <div class="row">
-              <label class="thin" for="v_electoral_card">Electoral card</label>
-              <input id="v_electoral_card" placeholder="optional – used for dedupe"/>
-            </div>
-            <div class="row">
-              <button id="createBtn" class="btn ok">Create</button>
-              <button id="updateBtn" class="btn">Update</button>
-              <button id="clearBtn" class="btn">Clear</button>
-            </div>
-          </form>
-          <p class="muted">Tip: click a voter in the list to load it into the form for update.</p>
+      <!-- إعدادات الحزب -->
+      <section class="panel">
+        <h1>إعدادات الحزب</h1>
+        <div class="row">
+          <label class="thin" for="th">العَتبة:</label>
+          <input id="th" type="number" min="0" step="100" style="max-width:220px"/>
+          <button id="saveTh" class="btn">حفظ</button>
+          <span class="pill">المؤيدون الحاليون: <b id="supNow">0</b></span>
+          <span class="pill">التقدم: <b id="pctNow">0%</b></span>
         </div>
+      </section>
 
-        <!-- Right: List/Search/Delete -->
-        <div>
-          <h2>Search / Manage voters</h2>
-          <div class="row">
-            <input id="q" placeholder="Search name, card…" />
-            <button id="searchBtn" class="btn">Search</button>
+      <!-- المرشحون -->
+      <section class="panel">
+        <h1>المرشحون</h1>
+        <div style="overflow:auto">
+          <table id="candTbl">
+            <thead>
+              <tr>
+                <th>المعرّف</th><th>الاسم</th><th>الدائرة</th><th>المؤيدون</th><th>الهدف</th><th>٪</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- الناخبون (إضافة/تحديث/حذف) -->
+      <section class="panel">
+        <h1>الناخبون (إضافة / تحديث / حذف)</h1>
+
+        <div class="grid">
+          <!-- يسار: نموذج الإنشاء/التحديث -->
+          <div>
+            <h2>إنشاء / تحديث ناخب</h2>
+            <form id="vForm" onsubmit="return false;">
+              <input type="hidden" id="v_id"/>
+
+              <div class="row">
+                <label class="thin" for="v_full_name">الاسم الكامل</label>
+                <input id="v_full_name" placeholder="مثال: علي أحمد"/>
+                <label class="thin" for="v_dob">تاريخ الميلاد</label>
+                <input id="v_dob" type="date"/>
+              </div>
+
+              <div class="row">
+                <label class="thin" for="v_candidate_id">رقم المرشح</label>
+                <input id="v_candidate_id" type="number" min="1" placeholder="1"/>
+                <label class="thin" for="v_assistant_id">رقم المساعد</label>
+                <input id="v_assistant_id" type="number" min="1" placeholder="اختياري"/>
+              </div>
+
+              <div class="row">
+                <label class="thin" for="v_district_id">رقم الدائرة</label>
+                <input id="v_district_id" type="number" min="1" placeholder="مثال: 1"/>
+                <label class="thin" for="v_polling_center">مركز الاقتراع</label>
+                <input id="v_polling_center" placeholder="اختياري"/>
+              </div>
+
+              <div class="row">
+                <label class="thin" for="v_electoral_card">البطاقة الانتخابية</label>
+                <input id="v_electoral_card" placeholder="اختياري — تُستخدم لمنع التكرار"/>
+              </div>
+
+              <div class="row">
+                <button id="createBtn" class="btn ok">إضافة</button>
+                <button id="updateBtn" class="btn">تحديث</button>
+                <button id="clearBtn" class="btn">مسح</button>
+              </div>
+            </form>
+            <p class="muted">تلميح: انقر أي سجل في القائمة لتحميله في النموذج وتعديله.</p>
           </div>
-          <div style="overflow:auto;max-height:420px;border:1px solid var(--border);border-radius:12px">
-            <table id="vTbl">
-              <thead>
-              <tr><th>ID</th><th>Name</th><th>Card</th><th>Candidate</th><th>District</th><th>Actions</th></tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div class="paging">
-            <button id="prevPage" class="btn">Prev</button>
-            <span class="muted">Page <b id="pageNo">1</b></span>
-            <button id="nextPage" class="btn">Next</button>
+
+          <!-- يمين: البحث/الإدارة -->
+          <div>
+            <h2>بحث / إدارة الناخبين</h2>
+            <div class="row">
+              <input id="q" placeholder="ابحث بالاسم أو البطاقة…"/>
+              <button id="searchBtn" class="btn">بحث</button>
+            </div>
+            <div style="overflow:auto;max-height:420px;border:1px solid var(--border);border-radius:12px">
+              <table id="vTbl">
+                <thead>
+                  <tr>
+                    <th>المعرّف</th><th>الاسم</th><th>البطاقة</th><th>المرشح</th><th>الدائرة</th><th>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="paging">
+              <button id="prevPage" class="btn">السابق</button>
+              <span class="muted">الصفحة <b id="pageNo">1</b></span>
+              <button id="nextPage" class="btn">التالي</button>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- NEW: Account security -->
-    <section class="panel">
-      <h1>Account security</h1>
-      <div class="row">
-        <label class="thin" for="curPwd">Current password</label>
-        <input id="curPwd" type="password" placeholder="Current password"/>
-        <label class="thin" for="newPwd">New password</label>
-        <input id="newPwd" type="password" placeholder="New strong password"/>
-      </div>
-      <div class="row">
-        <button id="chgPwdBtn" class="btn">Change password</button>
-      </div>
-      <p class="muted">For your security, you’ll need to sign in again after a successful password change.</p>
-    </section>
+      <!-- أمان الحساب -->
+      <section class="panel">
+        <h1>أمان الحساب</h1>
+        <div class="row">
+          <label class="thin" for="curPwd">كلمة المرور الحالية</label>
+          <input id="curPwd" type="password" placeholder="كلمة المرور الحالية"/>
+          <label class="thin" for="newPwd">كلمة المرور الجديدة</label>
+          <input id="newPwd" type="password" placeholder="كلمة مرور قوية جديدة"/>
+        </div>
+        <div class="row">
+          <button id="chgPwdBtn" class="btn">تغيير كلمة المرور</button>
+        </div>
+        <p class="muted">لأمانك، ستحتاج إلى تسجيل الدخول مجددًا بعد تغيير كلمة المرور بنجاح.</p>
+      </section>
 
+    </div>
   </div>
 
   <div id="toast" class="toast"></div>
 
   <script>
-    // -------- helpers
+    // -------- إشعارات صغيرة
     function showToast(msg, ok=false){
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -180,19 +222,22 @@
       t._h = setTimeout(()=>t.classList.remove('show'), 2500);
     }
 
+    // -------- طلبات مع تحقّق جلسة
     async function authedFetch(url, opts={}) {
       const res = await fetch(url, { credentials:'include', ...opts });
       if (res.status === 401) { location.href = '/login.html'; return null; }
       return res;
     }
 
-    // -------- nav
-    document.getElementById('logoutBtn').onclick = async ()=>{
-      await fetch('/api/auth/logout',{method:'POST',credentials:'include'});
-      location.href='/login.html';
-    };
+    // -------- شريط علوي: تسجيل الخروج
+    document.addEventListener('click', async (e)=>{
+      if (e.target && e.target.id === 'logoutBtn') {
+        await fetch('/api/auth/logout',{method:'POST',credentials:'include'});
+        location.href='/login.html';
+      }
+    });
 
-    // -------- party config
+    // -------- إعدادات الحزب
     async function loadParty() {
       const r = await authedFetch('/api/party-progress'); if(!r) return;
       const j = await r.json(); if(!j.ok) return;
@@ -206,15 +251,15 @@
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ threshold: th.value|0 })
       });
-      if (r && r.ok) { showToast('Threshold saved', true); loadParty(); }
-      else showToast('Failed to save threshold');
+      if (r && r.ok) { showToast('تم حفظ العتبة', true); loadParty(); }
+      else showToast('تعذّر حفظ العتبة');
     }
     const th = document.getElementById('th');
     const supNow = document.getElementById('supNow');
     const pctNow = document.getElementById('pctNow');
     document.getElementById('saveTh').onclick = saveTh;
 
-    // -------- candidates
+    // -------- المرشحون
     async function loadCandidates() {
       const r = await authedFetch('/api/candidates'); if(!r) return;
       const j = await r.json(); const tb = document.querySelector('#candTbl tbody');
@@ -228,16 +273,17 @@
       });
     }
 
-    // -------- voters CRUD
+    // -------- الناخبون (قائمة/بحث/حذف/تحميل للنموذج)
     const page = {n:1, size:20};
 
     async function listVoters() {
       const q = document.getElementById('q').value.trim();
       const url = `/api/admin/voters?search=${encodeURIComponent(q)}&page=${page.n}&size=${page.size}`;
       const r = await authedFetch(url); if(!r) return;
-      if (!r.ok) { showToast('Failed to load voters'); return; }
+      if (!r.ok) { showToast('تعذّر تحميل قائمة الناخبين'); return; }
       const j = await r.json();
       const tb = document.querySelector('#vTbl tbody'); tb.innerHTML='';
+
       (j.items||j.voters||[]).forEach(v=>{
         const tr=document.createElement('tr');
         tr.innerHTML = `
@@ -247,31 +293,29 @@
           <td>${v.candidate_id??''}</td>
           <td>${v.district_id??''}</td>
           <td class="tools">
-            <button class="btn" data-id="${v.id}" data-ac="edit">Edit</button>
-            <button class="btn danger" data-id="${v.id}" data-ac="del">Delete</button>
+            <button class="btn" data-id="${v.id}" data-ac="edit">تحرير</button>
+            <button class="btn danger" data-id="${v.id}" data-ac="del">حذف</button>
           </td>`;
         tb.appendChild(tr);
       });
 
-      // actions
+      // إجراءات الصف
       tb.querySelectorAll('button').forEach(b=>{
         b.onclick = async ()=>{
           const id = +b.dataset.id;
           if (b.dataset.ac==='edit') {
-            // load one voter (reuse listing item fields)
             const tr = b.closest('tr'); const tds = tr.children;
             v_id.value = id;
             v_full_name.value = tds[1].textContent.trim();
             v_electoral_card.value = tds[2].textContent.trim();
             v_candidate_id.value = tds[3].textContent.trim()||'';
             v_district_id.value = tds[4].textContent.trim()||'';
-            // others left as-is
-            showToast('Loaded into the form', true);
+            showToast('تم تحميل السجل في النموذج', true);
           } else {
-            if (!confirm('Delete this voter?')) return;
+            if (!confirm('هل تريد حذف هذا الناخب؟')) return;
             const rr = await authedFetch('/api/voters/'+id, {method:'DELETE'});
-            if (rr && rr.ok) { showToast('Deleted', true); listVoters(); loadParty(); loadCandidates(); }
-            else showToast('Delete failed');
+            if (rr && rr.ok) { showToast('تم الحذف', true); listVoters(); loadParty(); loadCandidates(); }
+            else showToast('فشل الحذف');
           }
         };
       });
@@ -281,25 +325,25 @@
 
     async function createVoter() {
       const payload = collectForm();
-      if (!payload.full_name || !payload.candidate_id) { showToast('candidate_id & full_name required'); return; }
+      if (!payload.full_name || !payload.candidate_id) { showToast('حقلَا الاسم الكامل ورقم المرشح مطلوبان'); return; }
       const r = await authedFetch('/api/voters', {
         method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
       });
-      if (r && r.ok) { showToast('Created', true); clearForm(); listVoters(); loadParty(); loadCandidates(); }
+      if (r && r.ok) { showToast('تمت الإضافة', true); clearForm(); listVoters(); loadParty(); loadCandidates(); }
       else {
-        const msg = await (r?.text?.()||Promise.resolve('Create failed'));
-        showToast(msg||'Create failed');
+        const msg = await (r?.text?.()||Promise.resolve('فشل إنشاء السجل'));
+        showToast(msg||'فشل إنشاء السجل');
       }
     }
 
     async function updateVoter() {
-      const id = +v_id.value; if (!id) { showToast('Load a voter first'); return; }
+      const id = +v_id.value; if (!id) { showToast('حمّل سجلًا أولًا للتحديث'); return; }
       const payload = collectForm();
       const r = await authedFetch('/api/voters/'+id, {
         method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
       });
-      if (r && r.ok) { showToast('Updated', true); listVoters(); loadParty(); loadCandidates(); }
-      else showToast('Update failed');
+      if (r && r.ok) { showToast('تم التحديث', true); listVoters(); loadParty(); loadCandidates(); }
+      else showToast('فشل التحديث');
     }
 
     function collectForm(){
@@ -315,11 +359,9 @@
     }
     function numOrNull(v){ const n=+v; return Number.isFinite(n) && v!=='' ? n : null; }
 
-    function clearForm(){
-      vForm.reset(); v_id.value='';
-    }
+    function clearForm(){ vForm.reset(); v_id.value=''; }
 
-    // elements
+    // عناصر النموذج
     const vForm = document.getElementById('vForm');
     const v_id = document.getElementById('v_id');
     const v_full_name = document.getElementById('v_full_name');
@@ -337,28 +379,38 @@
     document.getElementById('prevPage').onclick = ()=>{ if(page.n>1){ page.n--; listVoters(); } };
     document.getElementById('nextPage').onclick = ()=>{ page.n++; listVoters(); };
 
-    // -------- change password
+    // تغيير كلمة المرور
     document.getElementById('chgPwdBtn').onclick = async ()=>{
       const cur = document.getElementById('curPwd').value;
       const nw  = document.getElementById('newPwd').value;
-      if (!cur || !nw) { showToast('Enter both current and new password'); return; }
+      if (!cur || !nw) { showToast('أدخل كلمتي المرور الحالية والجديدة'); return; }
       const r = await authedFetch('/api/auth/change-password', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ current_password: cur, new_password: nw })
       });
       if (r && r.ok) {
-        showToast('Password changed. Please sign in again.', true);
+        showToast('تم تغيير كلمة المرور. سيتم تسجيل الدخول من جديد.', true);
         setTimeout(async ()=>{
           await fetch('/api/auth/logout',{method:'POST',credentials:'include'});
           location.href='/login.html';
         }, 800);
-      } else showToast('Password change failed');
+      } else showToast('تعذّر تغيير كلمة المرور');
     };
 
-    // -------- init
-    loadParty();
-    loadCandidates();
-    listVoters();
+    // ----- بوابة التحقق من الجلسة + تهيئة الصفحة
+    (async function authGate(){
+      try{
+        const me = await fetch('/api/auth/me', { credentials: 'include' });
+        if (me.status === 401) { location.replace('/login.html'); return; }
+        document.getElementById('app').style.display = 'block';
+        // بدء التحميل
+        loadParty();
+        loadCandidates();
+        listVoters();
+      }catch{
+        location.replace('/login.html');
+      }
+    })();
   </script>
 </body>
 </html>

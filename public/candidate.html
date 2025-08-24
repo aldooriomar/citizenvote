@@ -1,84 +1,154 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CitizenVote — Candidate</title>
+  <title>CitizenVote — المرشح</title>
+
+  <!-- RTL / Arabic helpers -->
+  <link rel="stylesheet" href="css/rtl.css">
+
   <style>
-    :root{--bg:#0f1720;--panel:#121b26;--muted:#9fb2c7;--text:#e8f1fb;--accent:#4aa3ff;--border:#1b2a3a}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .nav{display:flex;gap:10px;align-items:center;justify-content:flex-start;padding:10px 16px;border-bottom:1px solid var(--border);background:#0c131b}
-    .nav .spacer{flex:1}
-    .btn{background:#152233;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:10px;text-decoration:none}
-    .btn:hover{background:#18283a}.danger{background:#2a1c1e;border-color:#3b2a2d}.danger:hover{background:#351f23}
+    :root{
+      --bg:#0f1720;--panel:#121b26;--muted:#9fb2c7;--text:#e8f1fb;
+      --accent:#4aa3ff;--border:#1b2a3a
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    /* نخفي التطبيق حتى يمر فحص الجلسة */
+    #app{display:none}
+
+    /* شريط علوي موحّد مع index.html */
+    .nav{
+      display:flex;gap:10px;align-items:center;justify-content:flex-start;
+      padding:10px 16px;border-bottom:1px solid var(--border);background:#0c131b;position:sticky;top:0;z-index:5
+    }
+    .brand{margin-left:auto;font-weight:700;font-size:18px;letter-spacing:.2px}
+    .btn{
+      background:#152233;border:1px solid var(--border);color:var(--text);
+      padding:8px 14px;border-radius:10px;text-decoration:none;display:inline-flex;gap:8px;align-items:center
+    }
+    .btn:hover{background:#18283a}
+    .danger{background:#2a1c1e;border-color:#3b2a2d}
+    .danger:hover{background:#351f23}
+
     .shell{max-width:1200px;margin:0 auto;padding:24px}
     .grid{display:grid;grid-template-columns:1fr 330px;gap:20px}
-    .panel{background:#121b26;border:1px solid var(--border);border-radius:16px;padding:18px}
+    @media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
     h1{font-size:22px;margin:0 0 12px}
     label{font-size:14px;color:var(--muted)}
-    input{background:#0e1824;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px}
-    .assist{display:flex;gap:10px;align-items:center;margin:6px 0;padding:10px;border:1px solid var(--border);border-radius:10px;background:#0f1a25}
-    table{width:100%;border-collapse:collapse}th,td{padding:10px;border-top:1px solid var(--border);text-align:right}th{color:var(--muted)}
-    .row{display:flex;gap:16px;align-items:center;margin:8px 0}
+    input{
+      width:100%;background:#0e1824;border:1px solid var(--border);color:var(--text);
+      padding:10px;border-radius:10px;outline:none
+    }
+    input:focus{border-color:#355574}
+    .assist{
+      display:flex;gap:10px;align-items:center;margin:6px 0;padding:10px;
+      border:1px solid var(--border);border-radius:10px;background:#0f1a25
+    }
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-top:1px solid var(--border)}
+    th{color:var(--muted)}
+    .row{display:flex;gap:12px;align-items:center;margin:8px 0}
+    .full{width:100%}
   </style>
 </head>
 <body>
-  <nav class="nav" dir="ltr">
-    <a class="btn" href="/index.html">Dashboard</a>
-    <a class="btn" href="/admin.html">Admin</a>
-    <a class="btn" href="/candidate.html">Candidates</a>
-    <span class="spacer"></span>
-    <button id="logoutBtn" class="btn danger">Logout</button>
-  </nav>
 
-  <div class="shell">
-    <div class="grid">
-      <section class="panel" id="candBox">
-        <h1 id="candTitle">No candidate selected</h1>
+  <div id="app">
+    <!-- شريط علوي (أبقينا الأزرار المطلوبة بالإنجليزية) -->
+    <nav class="nav">
+      <a class="btn" href="/index.html">Dashboard</a>
+      <a class="btn" href="/admin.html">Admin</a>
+      <a class="btn" href="/candidate.html">المرشحون</a>
+      <button id="logoutBtn" class="btn danger">Logout</button>
+      <div class="brand">CitizenVote</div>
+    </nav>
 
-        <div class="row"><label>المنطقة:</label><span id="candDistrict">—</span></div>
-        <div class="row"><label>الهدف:</label><span id="candTarget">—</span></div>
-        <div class="row"><label>المساعدون:</label><span id="candAssistCount">—</span></div>
+    <div class="shell">
+      <div class="grid">
+        <!-- محتوى المرشح -->
+        <section class="panel" id="candBox">
+          <h1 id="candTitle">المرشح — غير محدد</h1>
 
-        <h1 style="margin-top:18px">Assistants</h1>
-        <div id="assistList"></div>
+          <div class="row"><label>الدائرة:</label><span id="candDistrict">—</span></div>
+          <div class="row"><label>الهدف:</label><span id="candTarget">—</span></div>
+          <div class="row"><label>عدد المساعدين:</label><span id="candAssistCount">—</span></div>
 
-        <h1 style="margin-top:18px">Supporters by district</h1>
-        <table id="byDist"><thead><tr><th>المنطقة</th><th>المؤيدون</th></tr></thead><tbody></tbody></table>
+          <h1 style="margin-top:18px">المساعدون</h1>
+          <div id="assistList"></div>
 
-        <h1 style="margin-top:18px">Weekly growth</h1>
-        <div class="row" style="color:var(--muted)">—</div>
-      </section>
+          <h1 style="margin-top:18px">المؤيدون حسب الدائرة</h1>
+          <div style="overflow:auto">
+            <table id="byDist">
+              <thead>
+                <tr><th>الدائرة</th><th>عدد المؤيدين</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
 
-      <aside class="panel">
-        <h1>اختر مرشحاً</h1>
-        <div class="row" dir="ltr">
-          <button id="openBtn" class="btn">Open</button>
-          <input id="candIdInput" type="number" min="1" value="1" style="width:90px" />
-        </div>
-        <div class="row"><label>أو ابحث بالاسم</label></div>
-        <input id="searchName" placeholder="…Search name" style="width:100%" />
-        <div id="listBox" style="margin-top:14px"></div>
-        <div class="row" style="margin-top:16px">
-          <button id="shareBtn" class="btn" title="Copy a shareable link">Share Link</button>
-        </div>
-      </aside>
+          <h1 style="margin-top:18px">النمو الأسبوعي</h1>
+          <div class="row" style="color:var(--muted)">—</div>
+        </section>
+
+        <!-- الشريط الجانبي -->
+        <aside class="panel">
+          <h1>اختر مرشحًا</h1>
+
+          <div class="row">
+            <button id="openBtn" class="btn" title="فتح المرشح بالرقم">فتح</button>
+            <input id="candIdInput" type="number" min="1" value="1" style="max-width:120px" />
+          </div>
+
+          <div class="row"><label>أو ابحث بالاسم</label></div>
+          <input id="searchName" class="full" placeholder="ابحث بالاسم…" />
+
+          <div id="listBox" style="margin-top:14px"></div>
+
+          <div class="row" style="margin-top:16px">
+            <button id="shareBtn" class="btn" title="نسخ رابط المشاركة">نسخ الرابط</button>
+          </div>
+        </aside>
+      </div>
     </div>
   </div>
 
   <script>
+    // بوابة التحقق من الجلسة (مثل index.html)
+    (async function authGate(){
+      try {
+        const res = await fetch('/api/auth/me', { credentials:'include' });
+        if (res.status === 401) { location.replace('/login.html'); return; }
+        document.getElementById('app').style.display = 'block';
+        init(); // ابدأ التحميل بعد النجاح
+      } catch {
+        location.replace('/login.html');
+      }
+    })();
+
     async function authedFetch(url, opts={}) {
       const res = await fetch(url, { credentials:'include', ...opts });
       if (res.status === 401) { location.href = '/login.html'; return null; }
       return res;
     }
 
-    // logout
-    document.getElementById('logoutBtn').onclick = async ()=>{
-      await fetch('/api/auth/logout',{method:'POST',credentials:'include'});location.href='/login.html';
-    };
+    // تسجيل الخروج
+    document.addEventListener('click', async (e)=>{
+      if (e.target && e.target.id === 'logoutBtn') {
+        await fetch('/api/auth/logout', { method:'POST', credentials:'include' });
+        location.replace('/login.html');
+      }
+    });
 
-    // fill list on the right
+    // تعبئة قائمة المرشحين في الشريط الجانبي
     async function loadList() {
       const r = await authedFetch('/api/candidates'); if(!r) return;
       const j = await r.json(); const box = document.getElementById('listBox');
@@ -98,23 +168,25 @@
 
       const c = j.candidate;
       document.getElementById('candIdInput').value = id;
-      document.getElementById('candTitle').textContent = `Candidate #${c.id} — ${c.name}`;
+      document.getElementById('candTitle').textContent = `المرشح #${c.id} — ${c.name}`;
       document.getElementById('candDistrict').textContent = c.district_name || '—';
       document.getElementById('candTarget').textContent = c.target || 0;
       document.getElementById('candAssistCount').textContent = (j.assistants||[]).length;
 
+      // قائمة المساعدين
       const al = document.getElementById('assistList');
       al.innerHTML='';
       (j.assistants||[]).forEach(a=>{
         const d=document.createElement('div'); d.className='assist';
-        d.textContent = `${a.name} ${a.phone?(' — '+a.phone):''}`;
+        d.textContent = `${a.name}${a.phone?(' — '+a.phone):''}`;
         al.appendChild(d);
       });
 
-      // supporters by district (simple calc from voters)
+      // إحصاء المؤيدين حسب الدائرة (من بيانات voters)
       const map = {};
       (j.voters||[]).forEach(v=>{
-        const key = v.district_id||0; map[key]=(map[key]||0)+1;
+        const key = v.district_id || 0;
+        map[key] = (map[key] || 0) + 1;
       });
       const tbody = document.querySelector('#byDist tbody');
       tbody.innerHTML='';
@@ -124,30 +196,36 @@
         tbody.appendChild(tr);
       });
 
-      // push shareable state to URL
+      // رابط مشاركة قابل للنسخ (نحفظ id في العنوان)
       const url = new URL(location.href);
       url.searchParams.set('id', id);
       history.replaceState(null,'',url.toString());
     }
 
+    // زر "فتح"
     document.getElementById('openBtn').onclick = ()=>{
       const id = +document.getElementById('candIdInput').value;
       if (id>0) openCandidate(id);
     };
 
+    // زر "نسخ الرابط"
     document.getElementById('shareBtn').onclick = async ()=>{
-      try {
+      try{
         await navigator.clipboard.writeText(location.href);
-        alert('Link copied!');
-      } catch {
-        alert('Copy failed. You can manually copy the URL.');
+        alert('تم نسخ الرابط!');
+      }catch{
+        alert('تعذّر النسخ. يرجى نسخ الرابط يدويًا.');
       }
     };
 
-    // init from ?id=
-    const q = new URLSearchParams(location.search);
-    const initial = +(q.get('id')||'1');
-    loadList().then(()=> openCandidate(initial));
+    // بدء الصفحة بعد التحقق
+    async function init(){
+      // تحميل القائمة ثم فتح المرشح من عنوان الصفحة (?id=) أو 1 افتراضيًا
+      const q = new URLSearchParams(location.search);
+      const initial = +(q.get('id')||'1');
+      await loadList();
+      await openCandidate(initial);
+    }
   </script>
 </body>
 </html>
