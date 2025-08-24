@@ -1,0 +1,10 @@
+﻿{
+  "name": "citizenvote",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "prestart": "npm install --prefix server",
+    "start": "node server/app.js"
+  }
+}
