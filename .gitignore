@@ -21,3 +21,7 @@ coverage/
 *.sqlite
 *.sqlite-journal
 *.db-journal
+
+# Local runtime data
+data/
+
