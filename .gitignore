@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn.lock
+.pnpm-store/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+coverage/
+
+# SQLite temporary files
+*.sqlite
+*.sqlite-journal
+*.db-journal

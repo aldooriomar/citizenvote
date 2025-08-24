@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CitizenVote — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0f1720;--panel:#121b26;--muted:#9fb2c7;--text:#e8f1fb;--accent:#4aa3ff;
+      --chip:#1a2430;--border:#1b2a3a;--chip2:#223245;--ok:#28c281;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+    /* hide app until auth check finishes (prevents flashing dashboard before redirect) */
+    #app{display:none}
+
+    .shell{max-width:1200px;margin:0 auto;padding:24px}
+    .nav{
+      display:flex;gap:10px;align-items:center;justify-content:flex-end;
+      padding:10px 16px;border-bottom:1px solid var(--border);background:#0c131b;position:sticky;top:0;z-index:5
+    }
+    .brand{margin-right:auto;font-weight:700;font-size:18px;letter-spacing:.2px}
+    .btn{
+      background:#152233;border:1px solid var(--border);color:var(--text);
+      padding:8px 14px;border-radius:10px;text-decoration:none;display:inline-flex;gap:8px;align-items:center
+    }
+    .btn:hover{background:#18283a}
+    .danger{background:#2a1c1e;border-color:#3b2a2d}
+    .danger:hover{background:#351f23}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+    .panel{
+      background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)
+    }
+    h1{font-size:22px;margin:0 0 10px}
+    .chip{display:inline-flex;gap:8px;align-items:center;background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:10px;color:var(--muted)}
+    .bar{height:10px;background:#0e1824;border:1px solid var(--border);border-radius:999px;overflow:hidden}
+    .bar > i{display:block;height:100%;width:0;background:var(--accent)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px;border-top:1px solid var(--border);text-align:left}
+    th{color:var(--muted);font-weight:600}
+    tbody tr:hover{background:#0e1824;cursor:pointer}
+    .empty{color:var(--muted)}
+  </style>
+</head>
+<body>
+
+  <!-- APP (hidden until auth passes) -->
+  <div id="app">
+    <!-- NAV -->
+    <nav class="nav">
+      <div class="brand">CitizenVote</div>
+      <a class="btn" href="/index.html">Dashboard</a>
+      <a class="btn" href="/admin.html">Admin</a>
+      <a class="btn" href="/candidate.html">Candidates</a>
+      <button id="logoutBtn" class="btn danger">Logout</button>
+    </nav>
+
+    <div class="shell">
+
+      <!-- top cards -->
+      <div class="grid">
+        <section class="panel">
+          <h1>Party toward Threshold</h1>
+          <div style="display:flex;gap:10px;margin:8px 0 14px">
+            <span class="chip">Threshold: <b id="thVal">0</b></span>
+            <span class="chip">Supporters: <b id="supVal">0</b></span>
+            <span class="chip">Progress: <b id="pctVal">0%</b></span>
+          </div>
+          <div class="bar"><i id="barFill"></i></div>
+        </section>
+
+        <section class="panel">
+          <h1>Weekly party growth</h1>
+          <p class="empty">Shows recent growth once supporters are added.</p>
+          <div id="growthSlot" class="empty">No data yet.</div>
+        </section>
+      </div>
+
+      <!-- candidates table -->
+      <section class="panel" style="margin-top:20px">
+        <h1>Candidates (progress)</h1>
+        <p class="empty">Click a candidate row to open details.</p>
+        <div style="overflow:auto">
+          <table id="candTbl">
+            <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>District</th><th>Supporters</th><th>Target</th><th>%</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // 0) HARD GATE: verify session BEFORE showing the page
+    (async function authGate(){
+      try {
+        const res = await fetch('/api/auth/whoami', { credentials:'include' });
+        if (res.status === 401) { location.replace('/login.html'); return; }
+        // ok → reveal app & continue init
+        document.getElementById('app').style.display = 'block';
+        init();
+      } catch {
+        // on any network/parse issue, be safe and go to login
+        location.replace('/login.html');
+      }
+    })();
+
+    // 1) Helper: redirect to login if any later API call returns 401
+    async function authedFetch(url, opts = {}) {
+      const res = await fetch(url, { credentials: 'include', ...opts });
+      if (res.status === 401) { location.replace('/login.html'); return null; }
+      return res;
+    }
+
+    // 2) Party widget
+    async function loadParty() {
+      const r = await authedFetch('/api/party-progress');
+      if (!r) return;
+      const j = await r.json();
+      if (!j.ok) return;
+
+      const th = j.threshold|0;
+      const sup = j.supporters|0;
+      const pct = th>0 ? Math.min(100, ((sup/th)*100)) : 0;
+
+      document.getElementById('thVal').textContent = th.toLocaleString();
+      document.getElementById('supVal').textContent = sup.toLocaleString();
+      document.getElementById('pctVal').textContent = pct.toFixed(1) + '%';
+      document.getElementById('barFill').style.width = pct + '%';
+    }
+
+    // 3) Candidates table
+    async function loadCandidates() {
+      const r = await authedFetch('/api/candidates');
+      if (!r) return;
+      const j = await r.json();
+      const tbody = document.querySelector('#candTbl tbody');
+      tbody.innerHTML = '';
+
+      (j.candidates || []).forEach(row => {
+        const supporters = row.supporters ?? 0;
+        const target = row.target ?? 0;
+        const pct = target > 0 ? ((supporters/target)*100) : 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.id}</td>
+          <td>${row.name}</td>
+          <td>${row.district ?? ''}</td>
+          <td>${supporters}</td>
+          <td>${target}</td>
+          <td>${pct.toFixed(1)}</td>
+        `;
+        tr.addEventListener('click', () => {
+          location.href = '/candidate.html?id=' + row.id;
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 4) Logout
+    document.addEventListener('click', async (e)=>{
+      if (e.target && e.target.id === 'logoutBtn') {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        location.replace('/login.html');
+      }
+    });
+
+    // 5) After auth, load data
+    async function init(){
+      await loadParty();
+      await loadCandidates();
+    }
+  </script>
+</body>
+</html>

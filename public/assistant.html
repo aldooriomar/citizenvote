@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>بوابة المُعاون – إضافة مؤيد</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--bg:#0f1926;--card:#121d2a;--text:#e8f0ff;--muted:#a3b2c6;--accent:#47a8ff;--ok:#2ecc71;--warn:#ff6b6b}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Arial}
+    .nav{display:flex;gap:18px;align-items:center;padding:14px 22px;border-bottom:1px solid #1b2838;background:#0c1522}
+    .nav a{color:var(--text);text-decoration:none;padding:8px 12px;border-radius:8px;background:#15314c}
+    .nav .brand{font-weight:800;margin-right:auto;background:none}
+    .wrap{max-width:760px;margin:24px auto;padding:0 14px}
+    .card{background:var(--card);padding:18px;border-radius:14px}
+    label{display:block;margin:10px 0 6px;color:var(--muted)}
+    input,select,button{width:100%;padding:12px;border-radius:10px;border:1px solid #22344a;background:#0b1320;color:var(--text)}
+    button{background:var(--accent);color:#00182a;font-weight:700;cursor:pointer;margin-top:10px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .msg{margin-top:12px}
+  </style>
+</head>
+<body>
+  <nav class="nav" dir="ltr">
+    <a class="brand" href="/index.html">CitizenVote</a>
+    <a href="/index.html">Dashboard</a>
+    <a href="/admin.html">Admin</a>
+    <a href="/candidate.html">Candidates</a>
+    <a href="#" id="logout">Logout</a>
+  </nav>
+
+  <div class="wrap">
+    <div class="card">
+      <h2>إضافة مؤيد</h2>
+
+      <div class="row">
+        <div>
+          <label>المرشّح</label>
+          <select id="candidate"></select>
+        </div>
+        <div>
+          <label>المُعاون</label>
+          <select id="assistant"></select>
+        </div>
+      </div>
+
+      <label>الاسم الكامل</label>
+      <input id="full_name" placeholder="اكتب الاسم الكامل" />
+
+      <div class="row">
+        <div>
+          <label>تاريخ الميلاد (اختياري)</label>
+          <input id="dob" type="date" />
+        </div>
+        <div>
+          <label>رقم البطاقة الانتخابية (اختياري – يُستَخدم لمنع التكرار)</label>
+          <input id="electoral_card" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>الدائرة</label>
+          <select id="district"></select>
+        </div>
+        <div>
+          <label>المركز الانتخابي (اختياري)</label>
+          <input id="polling_center" />
+        </div>
+      </div>
+
+      <button id="save">حفظ المؤيد</button>
+      <div id="msg" class="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const qs = new URLSearchParams(location.search);
+    const prefCid = parseInt(qs.get("cid")||0,10);
+    const prefAid = parseInt(qs.get("aid")||0,10);
+
+    $("#logout").onclick = async (e)=>{ e.preventDefault();
+      await fetch("/api/auth/logout",{method:"POST",credentials:"include"});
+      location.href="/login.html";
+    };
+
+    async function loadBase(){
+      // candidates
+      const cr = await fetch("/api/candidates",{credentials:"include"});
+      if(cr.status===401){ location.href="/login.html"; return; }
+      const cdata = await cr.json();
+      $("#candidate").innerHTML = cdata.candidates.map(c=>`<option value="${c.candidate_id}">${c.candidate_id} — ${c.name}</option>`).join("");
+
+      // preselect candidate if provided
+      if(prefCid){ $("#candidate").value = String(prefCid); }
+
+      // load assistants for selected candidate
+      await loadAssistants();
+      $("#candidate").onchange = loadAssistants;
+
+      // districts
+      const dr = await fetch("/api/districts",{credentials:"include"});
+      const ddata = await dr.json();
+      $("#district").innerHTML = ddata.districts.map(d=>`<option value="${d.id}">${d.name}</option>`).join("");
+    }
+
+    async function loadAssistants(){
+      const cid = parseInt($("#candidate").value||0,10);
+      const ar = await fetch(`/api/assistants?candidate_id=${cid}`,{credentials:"include"});
+      const data = await ar.json();
+      $("#assistant").innerHTML = (data.assistants||[]).map(a=>`<option value="${a.id}">${a.name}</option>`).join("");
+      if(prefAid) $("#assistant").value = String(prefAid);
+    }
+
+    $("#save").onclick = async ()=>{
+      const body = {
+        candidate_id: parseInt($("#candidate").value||0,10),
+        assistant_id: parseInt($("#assistant").value||0,10) || null,
+        full_name: $("#full_name").value.trim(),
+        dob: $("#dob").value || null,
+        district_id: parseInt($("#district").value||0,10) || null,
+        polling_center: $("#polling_center").value.trim() || null,
+        electoral_card: $("#electoral_card").value.trim() || null
+      };
+      $("#msg").style.color = "";
+      $("#msg").textContent = "";
+      if(!body.candidate_id || !body.full_name){
+        $("#msg").style.color="#ff6b6b"; $("#msg").textContent = "المرشّح والاسم الكامل حقول مطلوبة"; return;
+      }
+      try{
+        const r = await fetch("/api/voters",{
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          credentials:"include", body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        if(!data.ok) throw new Error(data.msg||"فشل الحفظ");
+        if(data.duplicate){
+          $("#msg").style.color="#ff6b6b";
+          $("#msg").textContent = "تم العثور على بطاقة انتخابية مكررة – لم يتم الإضافة.";
+        }else{
+          $("#msg").style.color="#2ecc71";
+          $("#msg").textContent = "تم الحفظ بنجاح.";
+          $("#full_name").value = ""; $("#electoral_card").value=""; $("#polling_center").value="";
+        }
+      }catch(e){
+        $("#msg").style.color="#ff6b6b";
+        $("#msg").textContent = e.message;
+      }
+    };
+
+    loadBase();
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8"/>
+  <title>CitizenVote · Voters CRUD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="/assets/style.css"/>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="container-xl mt-3">
+    <section class="card">
+      <h2>Find voters</h2>
+      <div class="row">
+        <label>Candidate ID</label>
+        <input id="cid" type="number" class="input-sm" value="1"/>
+        <label>Search</label>
+        <input id="q" class="input-sm" placeholder="name contains…"/>
+        <button id="btnLoad" class="btn btn-outline">Load</button>
+      </div>
+    </section>
+
+    <section class="card mt-3">
+      <h2>Add / Edit voter</h2>
+      <div class="row">
+        <input id="vid" type="hidden"/>
+        <input id="full_name" class="input-sm" placeholder="Full name"/>
+        <input id="dob" class="input-sm" placeholder="DOB YYYY-MM-DD"/>
+        <input id="polling_center" class="input-sm" placeholder="Polling Center"/>
+        <input id="electoral_card" class="input-sm" placeholder="Electoral Card"/>
+        <button id="save" class="btn btn-primary">Save</button>
+        <button id="del" class="btn btn-danger">Delete</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card mt-3">
+      <h2>Results</h2>
+      <table class="table" id="tbl">
+        <thead><tr>
+          <th>ID</th><th>Full name</th><th>Polling center</th><th>Card</th><th>Created</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/assets/common.js"></script>
+  <script>
+    fetch('/assets/nav.html').then(r=>r.text()).then(h=>{ document.getElementById('nav').innerHTML=h; });
+
+    const F = id => document.getElementById(id);
+
+    async function load(){
+      const r = await CV.api(`/api/voters?candidate_id=${F('cid').value}&q=${encodeURIComponent(F('q').value)}`);
+      const tb = document.querySelector('#tbl tbody'); tb.innerHTML='';
+      (r?.rows||[]).forEach(v=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${v.id}</td><td><a href="#">${v.full_name}</a></td>
+                        <td>${v.polling_center||''}</td><td>${v.electoral_card||''}</td><td>${v.created_at.slice(0,10)}</td>`;
+        tr.querySelector('a').onclick = ()=>{
+          F('vid').value = v.id;
+          F('full_name').value = v.full_name;
+          F('dob').value = v.dob||'';
+          F('polling_center').value = v.polling_center||'';
+          F('electoral_card').value = v.electoral_card||'';
+          window.scrollTo({ top:0, behavior:'smooth' });
+        };
+        tb.appendChild(tr);
+      });
+    }
+    F('btnLoad').onclick = load;
+    load();
+
+    F('reset').onclick = ()=>{ F('vid').value=''; F('full_name').value=''; F('dob').value=''; F('polling_center').value=''; F('electoral_card').value=''; };
+
+    F('save').onclick = async ()=>{
+      const body = {
+        candidate_id: +F('cid').value,
+        full_name: F('full_name').value.trim(),
+        dob: F('dob').value.trim()||null,
+        polling_center: F('polling_center').value.trim()||null,
+        electoral_card: F('electoral_card').value.trim()||null
+      };
+      if(!body.full_name){ alert('Full name required'); return; }
+
+      if(F('vid').value){
+        const r = await CV.api('/api/voters/'+F('vid').value, { method:'PUT', body: JSON.stringify(body) });
+        if(r?.ok) { alert('Updated'); load(); }
+        else alert(r?.msg||'Error');
+      }else{
+        const r = await CV.api('/api/voters', { method:'POST', body: JSON.stringify(body) });
+        if(r?.ok) { alert('Added'); load(); }
+        else alert(r?.msg||'Error');
+      }
+    };
+
+    F('del').onclick = async ()=>{
+      const id = F('vid').value;
+      if(!id) return alert('Pick a voter first');
+      if(!confirm('Delete this voter?')) return;
+      const r = await CV.api('/api/voters/'+id, { method:'DELETE' });
+      if(r?.ok) { alert('Deleted'); F('reset').click(); load(); }
+      else alert(r?.msg||'Error');
+    };
+  </script>
+</body>
+</html>

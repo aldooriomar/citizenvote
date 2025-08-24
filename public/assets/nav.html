@@ -1,0 +1,15 @@
+<header class="navbar">
+  <div class="container-xl">
+    <div class="navbar-brand">CitizenVote</div>
+    <nav class="nav">
+      <a href="/index.html" class="btn btn-outline">Dashboard</a>
+      <a href="/admin.html" class="btn btn-outline">Admin</a>
+      <a href="/candidate.html" class="btn btn-outline">Candidates</a>
+      <button id="btnLogout" class="btn btn-danger">Logout</button>
+    </nav>
+  </div>
+</header>
+<script src="/assets/common.js"></script>
+<script>
+  document.getElementById('btnLogout')?.addEventListener('click', CV.logout);
+</script>

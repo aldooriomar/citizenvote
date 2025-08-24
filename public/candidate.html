@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CitizenVote — Candidate</title>
+  <style>
+    :root{--bg:#0f1720;--panel:#121b26;--muted:#9fb2c7;--text:#e8f1fb;--accent:#4aa3ff;--border:#1b2a3a}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .nav{display:flex;gap:10px;align-items:center;justify-content:flex-start;padding:10px 16px;border-bottom:1px solid var(--border);background:#0c131b}
+    .nav .spacer{flex:1}
+    .btn{background:#152233;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:10px;text-decoration:none}
+    .btn:hover{background:#18283a}.danger{background:#2a1c1e;border-color:#3b2a2d}.danger:hover{background:#351f23}
+    .shell{max-width:1200px;margin:0 auto;padding:24px}
+    .grid{display:grid;grid-template-columns:1fr 330px;gap:20px}
+    .panel{background:#121b26;border:1px solid var(--border);border-radius:16px;padding:18px}
+    h1{font-size:22px;margin:0 0 12px}
+    label{font-size:14px;color:var(--muted)}
+    input{background:#0e1824;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:10px}
+    .assist{display:flex;gap:10px;align-items:center;margin:6px 0;padding:10px;border:1px solid var(--border);border-radius:10px;background:#0f1a25}
+    table{width:100%;border-collapse:collapse}th,td{padding:10px;border-top:1px solid var(--border);text-align:right}th{color:var(--muted)}
+    .row{display:flex;gap:16px;align-items:center;margin:8px 0}
+  </style>
+</head>
+<body>
+  <nav class="nav" dir="ltr">
+    <a class="btn" href="/index.html">Dashboard</a>
+    <a class="btn" href="/admin.html">Admin</a>
+    <a class="btn" href="/candidate.html">Candidates</a>
+    <span class="spacer"></span>
+    <button id="logoutBtn" class="btn danger">Logout</button>
+  </nav>
+
+  <div class="shell">
+    <div class="grid">
+      <section class="panel" id="candBox">
+        <h1 id="candTitle">No candidate selected</h1>
+
+        <div class="row"><label>المنطقة:</label><span id="candDistrict">—</span></div>
+        <div class="row"><label>الهدف:</label><span id="candTarget">—</span></div>
+        <div class="row"><label>المساعدون:</label><span id="candAssistCount">—</span></div>
+
+        <h1 style="margin-top:18px">Assistants</h1>
+        <div id="assistList"></div>
+
+        <h1 style="margin-top:18px">Supporters by district</h1>
+        <table id="byDist"><thead><tr><th>المنطقة</th><th>المؤيدون</th></tr></thead><tbody></tbody></table>
+
+        <h1 style="margin-top:18px">Weekly growth</h1>
+        <div class="row" style="color:var(--muted)">—</div>
+      </section>
+
+      <aside class="panel">
+        <h1>اختر مرشحاً</h1>
+        <div class="row" dir="ltr">
+          <button id="openBtn" class="btn">Open</button>
+          <input id="candIdInput" type="number" min="1" value="1" style="width:90px" />
+        </div>
+        <div class="row"><label>أو ابحث بالاسم</label></div>
+        <input id="searchName" placeholder="…Search name" style="width:100%" />
+        <div id="listBox" style="margin-top:14px"></div>
+        <div class="row" style="margin-top:16px">
+          <button id="shareBtn" class="btn" title="Copy a shareable link">Share Link</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    async function authedFetch(url, opts={}) {
+      const res = await fetch(url, { credentials:'include', ...opts });
+      if (res.status === 401) { location.href = '/login.html'; return null; }
+      return res;
+    }
+
+    // logout
+    document.getElementById('logoutBtn').onclick = async ()=>{
+      await fetch('/api/auth/logout',{method:'POST',credentials:'include'});location.href='/login.html';
+    };
+
+    // fill list on the right
+    async function loadList() {
+      const r = await authedFetch('/api/candidates'); if(!r) return;
+      const j = await r.json(); const box = document.getElementById('listBox');
+      box.innerHTML = '';
+      (j.candidates||[]).forEach(c=>{
+        const b = document.createElement('button');
+        b.className='btn'; b.style.display='block'; b.style.width='100%'; b.style.margin='6px 0';
+        b.textContent = `#${c.id} — ${c.name}`;
+        b.onclick = ()=> openCandidate(c.id);
+        box.appendChild(b);
+      });
+    }
+
+    async function openCandidate(id) {
+      const r = await authedFetch('/api/candidate/'+id); if(!r) return;
+      const j = await r.json(); if(!j.ok) return;
+
+      const c = j.candidate;
+      document.getElementById('candIdInput').value = id;
+      document.getElementById('candTitle').textContent = `Candidate #${c.id} — ${c.name}`;
+      document.getElementById('candDistrict').textContent = c.district_name || '—';
+      document.getElementById('candTarget').textContent = c.target || 0;
+      document.getElementById('candAssistCount').textContent = (j.assistants||[]).length;
+
+      const al = document.getElementById('assistList');
+      al.innerHTML='';
+      (j.assistants||[]).forEach(a=>{
+        const d=document.createElement('div'); d.className='assist';
+        d.textContent = `${a.name} ${a.phone?(' — '+a.phone):''}`;
+        al.appendChild(d);
+      });
+
+      // supporters by district (simple calc from voters)
+      const map = {};
+      (j.voters||[]).forEach(v=>{
+        const key = v.district_id||0; map[key]=(map[key]||0)+1;
+      });
+      const tbody = document.querySelector('#byDist tbody');
+      tbody.innerHTML='';
+      Object.keys(map).forEach(k=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${k==0?'—':k}</td><td>${map[k]}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // push shareable state to URL
+      const url = new URL(location.href);
+      url.searchParams.set('id', id);
+      history.replaceState(null,'',url.toString());
+    }
+
+    document.getElementById('openBtn').onclick = ()=>{
+      const id = +document.getElementById('candIdInput').value;
+      if (id>0) openCandidate(id);
+    };
+
+    document.getElementById('shareBtn').onclick = async ()=>{
+      try {
+        await navigator.clipboard.writeText(location.href);
+        alert('Link copied!');
+      } catch {
+        alert('Copy failed. You can manually copy the URL.');
+      }
+    };
+
+    // init from ?id=
+    const q = new URLSearchParams(location.search);
+    const initial = +(q.get('id')||'1');
+    loadList().then(()=> openCandidate(initial));
+  </script>
+</body>
+</html>

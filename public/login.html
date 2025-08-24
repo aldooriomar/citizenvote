@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <title>CitizenVote — Sign in</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f1720; --panel:#111b25; --ink:#e5eef6; --muted:#9fb3c8;
+      --brand:#4da3ff; --brand-d:#2a7be6; --danger:#ff6b6b;
+      --radius:14px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg,#0e1520 0%,#0b1320 50%,#0a111b 100%);
+      color:var(--ink); display:grid; place-items:center; padding:32px;
+    }
+    .card{
+      width:min(720px,92vw); background:var(--panel); border-radius:var(--radius);
+      box-shadow:0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.03);
+      padding:28px 28px 24px; border:1px solid rgba(255,255,255,.06);
+    }
+    h1{margin:2px 0 22px; font-size:40px; letter-spacing:.2px}
+    .lead{color:var(--muted); margin:0 0 18px; font-size:18px}
+    label{display:block; font-weight:600; margin:18px 0 8px}
+    input{
+      width:100%; padding:14px 16px; background:#0b141e; border:1px solid #1d2a36; color:var(--ink);
+      border-radius:10px; outline:none; transition:.15s border-color;
+    }
+    input:focus{border-color:#355574}
+    .row{margin-top:8px}
+    .btn{
+      display:block; width:100%; margin-top:22px; padding:14px 16px; font-weight:700;
+      color:#fff; background:var(--brand); border:1px solid var(--brand-d);
+      border-radius:12px; cursor:pointer; transition:.2s background;
+    }
+    .btn:hover{background:var(--brand-d)}
+    .hint{color:var(--muted); margin-top:14px; font-size:14px}
+    .muted{color:var(--muted)}
+    .err{
+      margin-top:14px; padding:12px 14px; border-radius:10px; background:rgba(255,0,0,.08);
+      border:1px solid rgba(255,0,0,.25); color:#ffd3d3; display:none;
+    }
+    .foot{margin-top:20px; display:flex; justify-content:space-between; align-items:center; gap:12px}
+    .brand{font-weight:800; color:#cfe4ff; letter-spacing:.3px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">CitizenVote</div>
+    <h1>Sign in</h1>
+    <p class="lead">Use your account to access the system.</p>
+
+    <form id="loginForm" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" autocomplete="username" placeholder="admin@local" value="admin@local" required />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password"
+             placeholder="ChangeMe123" value="ChangeMe123" required />
+
+      <div id="err" class="err"></div>
+
+      <button id="btn" class="btn" type="submit">Sign in</button>
+    </form>
+
+    <div class="foot">
+      <div class="hint">
+        <span class="muted">Default admin (local):</span>
+        <strong>admin@local</strong> / <strong>ChangeMe123</strong>
+      </div>
+      <small class="muted">v1</small>
+    </div>
+  </div>
+
+  <script>
+    // Always land on this page if user isn't logged in:
+    // (If your server already redirects / → /login.html for unauthenticated users, this is extra safety.)
+    // No-op here; we rely on backend redirect.
+
+    function showError(msg){
+      const box = document.getElementById('err');
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+
+    function clearError(){
+      const box = document.getElementById('err');
+      box.style.display = 'none';
+      box.textContent = '';
+    }
+
+    async function login(email, password){
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        credentials: 'include',         // send/receive auth cookie
+        body: JSON.stringify({ email, password })
+      });
+      return res.json().catch(() => ({ ok:false, msg:'Invalid server response' }));
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();               // <-- prevents ?email=...&password=... in URL
+      clearError();
+
+      const btn = document.getElementById('btn');
+      btn.disabled = true; btn.textContent = 'Signing in…';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try{
+        const result = await login(email, password);
+        if(result && result.ok){
+          // Redirect to dashboard
+          window.location.replace('/index.html');
+        }else{
+          showError(result && result.msg ? result.msg : 'Sign in failed.');
+          btn.disabled = false; btn.textContent = 'Sign in';
+        }
+      }catch(err){
+        showError('Network error. Make sure the server is running.');
+        btn.disabled = false; btn.textContent = 'Sign in';
+      }
+    });
+
+    // If someone opens /?email=...&password=... (accidental GET submission),
+    // clean the URL and do nothing.
+    if (window.location.search.includes('email=') || window.location.search.includes('password=')) {
+      history.replaceState({}, '', '/login.html');
+    }
+  </script>
+</body>
+</html>

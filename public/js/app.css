@@ -1,0 +1,29 @@
+/* C:\Projects\CitizenVote\public\css\app.css  (simple, readable, dark) */
+:root {
+  --bg:#0f1822; --card:#0f1a25; --muted:#9fb0c3; --text:#e6f1ff;
+  --accent:#41a1ff; --danger:#ff5d7a; --ring:#223044;
+  --table:#0d1520; --line:#1c2a3b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,Segoe UI,Roboto}
+a{color:var(--accent);text-decoration:none}
+.container{max-width:1280px;margin:0 auto;padding:28px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700}
+.nav .links a{margin-left:12px;padding:8px 14px;border-radius:10px;background:#0d2133;border:1px solid var(--line)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:22px;box-shadow:0 10px 26px rgba(0,0,0,.28)}
+.h2{font-size:22px;font-weight:800;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.table th,.table td{padding:12px 14px;text-align:left}
+.table thead th{color:var(--muted);font-weight:700;border-bottom:1px solid var(--line)}
+.kpi{display:flex;gap:26px;flex-wrap:wrap}
+.kpi .box{background:#0e1b29;border:1px solid var(--line);padding:12px 16px;border-radius:12px}
+.input{width:100%;background:#0b1622;border:1px solid var(--ring);color:var(--text);border-radius:12px;padding:12px}
+.mt12{margin-top:12px}
+.center{display:flex;justify-content:center}
+.progress{height:8px;background:#0b1622;border:1px solid var(--ring);border-radius:999px;overflow:hidden}
+.progress>span{display:block;height:100%;background:var(--accent);width:0%}
+.right{float:right}
